@@ -84,8 +84,11 @@ protected:
   vtkSmartPointer<vtkSeedCallback> FixedSeedCallback;
   vtkSmartPointer<vtkSeedCallback> MovingSeedCallback;
 
-  vtkSmartPointer<vtkPointHandleRepresentation2D> HandleRepresentation;
-  vtkSmartPointer<vtkSeedRepresentation> SeedRepresentation;
+  vtkSmartPointer<vtkPointHandleRepresentation2D> FixedHandleRepresentation;
+  vtkSmartPointer<vtkSeedRepresentation> FixedSeedRepresentation;
+  
+  vtkSmartPointer<vtkPointHandleRepresentation2D> MovingHandleRepresentation;
+  vtkSmartPointer<vtkSeedRepresentation> MovingSeedRepresentation;
 };
 
 #endif // Form_H

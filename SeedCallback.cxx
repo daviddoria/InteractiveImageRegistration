@@ -18,7 +18,18 @@
 
 #include "SeedCallback.h"
 
+// STL
+#include <sstream>
+
+// VTK
+#include <vtkActor.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderWindow.h>
+#include <vtkRendererCollection.h>
 #include <vtkSeedRepresentation.h>
+#include <vtkVectorText.h>
 
 void vtkSeedCallback::Execute(vtkObject*, unsigned long event, void *calldata)
 {
@@ -32,10 +43,41 @@ void vtkSeedCallback::Execute(vtkObject*, unsigned long event, void *calldata)
       this->SeedRepresentation->GetSeedDisplayPosition(seedId, pos);
       std::cout << "Seed " << seedId << " : (" << pos[0] << " " << pos[1] << " " << pos[2] << ")" << std::endl;
       }
+      
+    // Create text
+    vtkSmartPointer<vtkVectorText> textSource = 
+      vtkSmartPointer<vtkVectorText>::New();
+    std::stringstream ss;
+    ss << this->SeedRepresentation->GetNumberOfSeeds()-1;
+    textSource->SetText(ss.str().c_str());
+    textSource->Update();
+  
+    // Create a mapper and actor
+    vtkSmartPointer<vtkPolyDataMapper> mapper = 
+      vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(textSource->GetOutputPort());
+  
+    vtkSmartPointer<vtkActor> actor = 
+      vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->SetScale(10);
+    
+    double pos[3];
+    this->SeedRepresentation->GetSeedWorldPosition(this->SeedRepresentation->GetNumberOfSeeds()-1, pos);
+    actor->SetPosition(pos[0], pos[1], 0);
+    std::cout << "Text pos: " << pos[0] << " " << pos[1] << " " << 0 << std::endl;
+    actor->GetProperty()->SetColor(1.0, 0.0, 0.0);
+
+    this->SeedWidget->GetInteractor()->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(actor);
+    
+    this->SeedWidget->GetInteractor()->GetRenderWindow()->Render();
+    this->SeedWidget->GetInteractor()->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->Render();
+    
     return;
     }
   if (event == vtkCommand::InteractionEvent)
     {
+    /*
     std::cout << "Interaction..." << std::endl;
     if (calldata)
       {
@@ -43,6 +85,7 @@ void vtkSeedCallback::Execute(vtkObject*, unsigned long event, void *calldata)
       this->SeedRepresentation->GetSeedDisplayPosition(0, pos);
       std::cout << "Moved to (" << pos[0] << " " << pos[1] << " " << pos[2] << ")" << std::endl;
       }
+    */
     return;
     }
 }

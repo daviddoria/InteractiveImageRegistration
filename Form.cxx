@@ -64,6 +64,9 @@ Form::Form()
   this->LeftRenderer = vtkSmartPointer<vtkRenderer>::New();
   this->RightRenderer = vtkSmartPointer<vtkRenderer>::New();
 
+  std::cout << "Left renderer: " << this->LeftRenderer << std::endl;
+  std::cout << "Right renderer: " << this->RightRenderer << std::endl;
+  
   this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(this->LeftRenderer);
   this->qvtkWidgetRight->GetRenderWindow()->AddRenderer(this->RightRenderer);
 
@@ -87,12 +90,16 @@ Form::Form()
   QIcon saveIcon = QIcon::fromTheme("document-save");
   actionSave->setIcon(saveIcon);
   this->toolBar->addAction(actionSave);
+    
+  this->FixedHandleRepresentation = vtkSmartPointer<vtkPointHandleRepresentation2D>::New();
+  this->FixedHandleRepresentation->GetProperty()->SetColor(1,0,0);
+  this->FixedSeedRepresentation = vtkSmartPointer<vtkSeedRepresentation>::New();
+  this->FixedSeedRepresentation->SetHandleRepresentation(this->FixedHandleRepresentation);
   
-  this->HandleRepresentation = vtkSmartPointer<vtkPointHandleRepresentation2D>::New();
-  this->HandleRepresentation->GetProperty()->SetColor(1,0,0);
-
-  this->SeedRepresentation = vtkSmartPointer<vtkSeedRepresentation>::New();
-  this->SeedRepresentation->SetHandleRepresentation(this->HandleRepresentation);
+  this->MovingHandleRepresentation = vtkSmartPointer<vtkPointHandleRepresentation2D>::New();
+  this->MovingHandleRepresentation->GetProperty()->SetColor(1,0,0);
+  this->MovingSeedRepresentation = vtkSmartPointer<vtkSeedRepresentation>::New();
+  this->MovingSeedRepresentation->SetHandleRepresentation(this->MovingHandleRepresentation);
 };
 
 void Form::on_actionOpenMovingImage_activated()
@@ -139,7 +146,7 @@ void Form::on_actionOpenMovingImage_activated()
   // Seed widget
   this->MovingSeedWidget = vtkSmartPointer<vtkSeedWidget>::New();
   this->MovingSeedWidget->SetInteractor(this->qvtkWidgetRight->GetRenderWindow()->GetInteractor());
-  this->MovingSeedWidget->SetRepresentation(this->SeedRepresentation);
+  this->MovingSeedWidget->SetRepresentation(this->MovingSeedRepresentation);
   
   this->MovingSeedCallback = vtkSmartPointer<vtkSeedCallback>::New();
   this->MovingSeedCallback->SetWidget(this->MovingSeedWidget);
@@ -189,10 +196,11 @@ void Form::on_actionOpenFixedImage_activated()
 
   this->LeftRenderer->ResetCamera();
 
+  std::cout << "Fixed interactor: " << this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor() << std::endl;
   // Seed widget
   this->FixedSeedWidget = vtkSmartPointer<vtkSeedWidget>::New();
   this->FixedSeedWidget->SetInteractor(this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor());
-  this->FixedSeedWidget->SetRepresentation(this->SeedRepresentation);
+  this->FixedSeedWidget->SetRepresentation(this->FixedSeedRepresentation);
   
   this->FixedSeedCallback = vtkSmartPointer<vtkSeedCallback>::New();
   this->FixedSeedCallback->SetWidget(this->FixedSeedWidget);
