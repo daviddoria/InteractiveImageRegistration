@@ -1,0 +1,1 @@
+Functionality just like Matlab's cpselect, but using ITK/VTK. This allows a user to select corresponding points in two images which are then used as landmarks for registration.
