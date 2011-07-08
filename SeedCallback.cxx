@@ -35,13 +35,13 @@ void vtkSeedCallback::Execute(vtkObject*, unsigned long event, void *calldata)
 {
   if (event == vtkCommand::PlacePointEvent)
     {
-    std::cout << "Placing point..." << std::endl;
-    std::cout << "There are now " << this->SeedRepresentation->GetNumberOfSeeds() << " seeds." << std::endl;
+    //std::cout << "Placing point..." << std::endl;
+    //std::cout << "There are now " << this->SeedRepresentation->GetNumberOfSeeds() << " seeds." << std::endl;
     for(vtkIdType seedId = 0; seedId < this->SeedRepresentation->GetNumberOfSeeds(); seedId++)
       {
       double pos[3];
       this->SeedRepresentation->GetSeedDisplayPosition(seedId, pos);
-      std::cout << "Seed " << seedId << " : (" << pos[0] << " " << pos[1] << " " << pos[2] << ")" << std::endl;
+      //std::cout << "Seed " << seedId << " : (" << pos[0] << " " << pos[1] << " " << pos[2] << ")" << std::endl;
       }
       
     // Create text
@@ -65,7 +65,7 @@ void vtkSeedCallback::Execute(vtkObject*, unsigned long event, void *calldata)
     double pos[3];
     this->SeedRepresentation->GetSeedWorldPosition(this->SeedRepresentation->GetNumberOfSeeds()-1, pos);
     actor->SetPosition(pos[0], pos[1], 0);
-    std::cout << "Text pos: " << pos[0] << " " << pos[1] << " " << 0 << std::endl;
+    //std::cout << "Text pos: " << pos[0] << " " << pos[1] << " " << 0 << std::endl;
     actor->GetProperty()->SetColor(1.0, 0.0, 0.0);
 
     this->SeedWidget->GetInteractor()->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(actor);

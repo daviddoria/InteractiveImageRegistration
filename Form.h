@@ -57,6 +57,7 @@ public slots:
   void on_actionOpenMovingImage_activated();
   void on_actionOpenFixedImage_activated();
   void on_actionSave_activated();
+  void on_btnRegister_clicked();
 
 protected:
 

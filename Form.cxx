@@ -24,6 +24,10 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkRegionOfInterestImageFilter.h"
+#include "itkVector.h"
+#include "itkDeformationFieldSource.h"
+#include "itkDeformationFieldTransform.h"
+#include "itkResampleVectorImageFilter.h"
 
 // Qt
 #include <QFileDialog>
@@ -101,6 +105,96 @@ Form::Form()
   this->MovingSeedRepresentation = vtkSmartPointer<vtkSeedRepresentation>::New();
   this->MovingSeedRepresentation->SetHandleRepresentation(this->MovingHandleRepresentation);
 };
+
+void Form::on_btnRegister_clicked()
+{
+  if(this->MovingSeedRepresentation->GetNumberOfSeeds() !=
+     this->FixedSeedRepresentation->GetNumberOfSeeds())
+  {
+    std::cerr << "The number of fixed seeds must match the number of moving seeds!" << std::endl;
+    return;
+  }
+  
+  //typedef   itk::Vector< float, 2 >    VectorType;
+  typedef   itk::Vector< double, 2 >    VectorType;
+  typedef   itk::Image< VectorType, 2 >   DeformationFieldType;
+  
+  typedef itk::DeformationFieldSource<DeformationFieldType>  DeformationFieldSourceType;
+  DeformationFieldSourceType::Pointer deformationFieldSource = DeformationFieldSourceType::New();
+  deformationFieldSource->SetOutputSpacing( this->FixedImage->GetSpacing() );
+  deformationFieldSource->SetOutputOrigin(  this->FixedImage->GetOrigin() );
+  deformationFieldSource->SetOutputRegion(  this->FixedImage->GetLargestPossibleRegion() );
+  deformationFieldSource->SetOutputDirection( this->FixedImage->GetDirection() );
+
+  //  Create source and target landmarks.
+  typedef DeformationFieldSourceType::LandmarkContainerPointer   LandmarkContainerPointer;
+  typedef DeformationFieldSourceType::LandmarkContainer          LandmarkContainerType;
+  typedef DeformationFieldSourceType::LandmarkPointType          LandmarkPointType;
+
+  LandmarkContainerType::Pointer fixedLandmarks = LandmarkContainerType::New();
+  LandmarkContainerType::Pointer movingLandmarks = LandmarkContainerType::New();
+
+  LandmarkPointType movingPoint;
+  LandmarkPointType fixedPoint;
+
+  for(vtkIdType i = 0; i < this->FixedSeedRepresentation->GetNumberOfSeeds(); i++)
+    {
+    double fixedPos[3];
+    this->FixedSeedRepresentation->GetSeedDisplayPosition(i, fixedPos);
+    fixedPoint[0] = 40;
+    fixedPoint[1] = 40;
+    fixedLandmarks->InsertElement( i, fixedPoint );
+  
+    double movingPos[3];
+    this->MovingSeedRepresentation->GetSeedDisplayPosition(i, movingPos);
+    movingPoint[0] = 20;
+    movingPoint[1] = 20;
+    movingLandmarks->InsertElement( i, movingPoint );
+    }
+
+  deformationFieldSource->SetSourceLandmarks( movingLandmarks.GetPointer() );
+  deformationFieldSource->SetTargetLandmarks( fixedLandmarks.GetPointer() );
+  deformationFieldSource->UpdateLargestPossibleRegion();
+  
+  //typedef itk::DeformationFieldTransform<float, 2>  DeformationFieldTransformType;
+  typedef itk::DeformationFieldTransform<double, 2>  DeformationFieldTransformType;
+  DeformationFieldTransformType::Pointer deformationFieldTransform = DeformationFieldTransformType::New();
+  deformationFieldTransform->SetDeformationField( deformationFieldSource->GetOutput() );
+  
+  //typedef itk::ResampleVectorImageFilter<FloatVectorImageType, FloatVectorImageType, float >    VectorResampleFilterType;
+  typedef itk::ResampleVectorImageFilter<FloatVectorImageType, FloatVectorImageType>    VectorResampleFilterType;
+  VectorResampleFilterType::Pointer vectorResampleFilter = VectorResampleFilterType::New();
+  vectorResampleFilter->SetInput( this->MovingImage );
+  vectorResampleFilter->SetTransform( deformationFieldTransform );
+  vectorResampleFilter->SetSize( this->FixedImage->GetLargestPossibleRegion().GetSize() );
+  vectorResampleFilter->SetOutputOrigin(  this->FixedImage->GetOrigin() );
+  vectorResampleFilter->SetOutputSpacing( this->FixedImage->GetSpacing() );
+  vectorResampleFilter->SetOutputDirection( this->FixedImage->GetDirection() );
+  vectorResampleFilter->SetDefaultPixelValue( 200 ); // This is the color which to set portions of the transformed image that do not correspond to the moving image
+  vectorResampleFilter->Update();
+  
+  this->TransformedImage = FloatVectorImageType::New();
+  Helpers::DeepCopyVectorImage<FloatVectorImageType>(vectorResampleFilter->GetOutput(), this->TransformedImage);
+    
+  if(this->chkRGB->isChecked())
+    {
+    Helpers::ITKImagetoVTKRGBImage(this->TransformedImage, this->TransformedImageData);
+    }
+  else
+    {
+    Helpers::ITKImagetoVTKMagnitudeImage(this->TransformedImage, this->TransformedImageData);
+    }
+  
+  this->TransformedImageActor->SetInput(this->TransformedImageData);
+
+  // Add Actor to renderer
+  this->LeftRenderer->AddActor(this->TransformedImageActor);
+  
+  this->qvtkWidgetLeft->GetInteractor()->GetRenderWindow()->Render();
+  this->LeftRenderer->Render();
+  
+  //this->LeftRenderer->ResetCamera();
+}
 
 void Form::on_actionOpenMovingImage_activated()
 {

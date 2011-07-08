@@ -22,6 +22,8 @@
 // ITK
 #include "itkImage.h"
 #include "itkIndex.h"
+#include "itkImageRegionConstIterator.h"
+#include "itkImageRegionIterator.h"
 
 // VTK
 #include <vtkSmartPointer.h>
@@ -36,6 +38,41 @@ namespace Helpers
 void ITKImagetoVTKImage(FloatVectorImageType::Pointer image, vtkImageData* outputImage); // This function simply drives ITKImagetoVTKRGBImage or ITKImagetoVTKMagnitudeImage
 void ITKImagetoVTKRGBImage(FloatVectorImageType::Pointer image, vtkImageData* outputImage);
 void ITKImagetoVTKMagnitudeImage(FloatVectorImageType::Pointer image, vtkImageData* outputImage);
+
+template<typename TImage>
+void DeepCopyScalarImage(typename TImage::Pointer input, typename TImage::Pointer output)
+{
+  output->SetRegions(input->GetLargestPossibleRegion());
+  output->Allocate();
+ 
+  itk::ImageRegionConstIterator<TImage> inputIterator(input, input->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TImage> outputIterator(output, output->GetLargestPossibleRegion());
+ 
+  while(!inputIterator.IsAtEnd())
+    {
+    outputIterator.Set(inputIterator.Get());
+    ++inputIterator;
+    ++outputIterator;
+    }
+}
+
+template<typename TImage>
+void DeepCopyVectorImage(typename TImage::Pointer input, typename TImage::Pointer output)
+{
+  output->SetRegions(input->GetLargestPossibleRegion());
+  output->SetNumberOfComponentsPerPixel(input->GetNumberOfComponentsPerPixel());
+  output->Allocate();
+ 
+  itk::ImageRegionConstIterator<TImage> inputIterator(input, input->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TImage> outputIterator(output, output->GetLargestPossibleRegion());
+ 
+  while(!inputIterator.IsAtEnd())
+    {
+    outputIterator.Set(inputIterator.Get());
+    ++inputIterator;
+    ++outputIterator;
+    }
+}
 
 }
 
